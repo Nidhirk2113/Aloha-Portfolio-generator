@@ -84,12 +84,6 @@ Pull requests are welcome! If you have ideas to enhance the UX, add new sections
 
 ---
 
-## 📃 License
-
-This project is open-sourced under the [MIT License](LICENSE).
-
----
-
 ## 🙋‍♀️ Connect With Me
 
 - 🔗 [LinkedIn](https://www.linkedin.com/in/nidhi-kulkarni2113/)
