@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Generator</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <!-- JSZip library to create zip files in the browser -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        /* Custom styles for the form wizard */
+        .step { display: none; }
+        .step.active { display: block; }
+        /* Simple transition for steps */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .step.active {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        #instructions-ui pre {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 flex items-center justify-center min-h-screen font-sans p-4">
+
+    <main id="generator-ui" class="bg-slate-800 p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-3xl">
+        <h1 class="text-3xl font-bold text-white text-center mb-2">Portfolio Generator</h1>
+        <p class="text-slate-400 text-center mb-8">Fill out the form below to create your personal portfolio website.</p>
+
+        <!-- Form Wizard Container -->
+        <form id="portfolio-form">
+            <!-- Step 1: Personal Details -->
+            <div class="step active" data-step="1">
+                <h2 class="text-2xl font-semibold text-purple-400 mb-6">1. Personal Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="first_name" placeholder="First Name" required class="w-full bg-slate-700 text-white p-3 rounded-lg border-2 border-slate-600 focus:border-purple-500 focus:outline-none">
+                    <input type="text" id="last_name" placeholder="Last Name" required class="w-full bg-slate-700 text-white p-3 rounded-lg border-2 border-slate-600 focus:border-purple-500 focus:outline-none">
+                </div>
+                <input type="text" id="title" placeholder="Professional Title (e.g., Software Engineer)" required class="mt-4 w-full bg-slate-700 text-white p-3 rounded-lg border-2 border-slate-600 focus:border-purple-500 focus:outline-none">
+                <textarea id="about_me" placeholder="A short paragraph about yourself..." rows="4" required class="mt-4 w-full bg-slate-700 text-white p-3 rounded-lg border-2 border-slate-600 focus:border-purple-500 focus:outline-none"></textarea>
+                <input type="email" id="contact_email" placeholder="Contact Email" required class="mt-4 w-full bg-slate-700 text-white p-3 rounded-lg border-2 border-slate-600 focus:border-purple-500 focus:outline-none">
+            </div>
+
+            <!-- Step 2: Education & Skills -->
+            <div class="step" data-step="2">
+                <h2 class="text-2xl font-semibold text-purple-400 mb-6">2. Education & Skills</h2>
+                <!-- Dynamic Education Fields -->
+                <div id="education-container" class="space-y-4 mb-4">
+                    <div class="education-entry bg-slate-700/50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-lg mb-2 text-white">Education #1</h3>
+                        <input type="text" placeholder="Degree (e.g., Bachelor of Science)" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2" required>
+                        <input type="text" placeholder="Major (e.g., Computer Science)" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2" required>
+                        <input type="text" placeholder="University Name" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2" required>
+                        <input type="text" placeholder="Graduation Year" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2" required>
+                        <input type="text" placeholder="CGPA or Percentage" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2">
+                        <textarea placeholder="Additional Info (Optional)" rows="2" class="w-full bg-slate-700 text-white p-3 rounded-lg"></textarea>
+                    </div>
+                </div>
+                <button type="button" id="add-education" class="text-purple-400 font-semibold mb-6">+ Add Another Education</button>
+                
+                <!-- Skills -->
+                <input type="text" id="skills" placeholder="Core Skills (comma-separated)" required class="w-full bg-slate-700 text-white p-3 rounded-lg">
+            </div>
+
+            <!-- Step 3: Professional Experience -->
+            <div class="step" data-step="3">
+                <h2 class="text-2xl font-semibold text-purple-400 mb-6">3. Professional Experience</h2>
+                 <!-- Dynamic containers for professional info -->
+                <div id="projects-container" class="mb-4"></div>
+                <button type="button" class="add-item-btn text-purple-400 font-semibold mb-4" data-type="projects">+ Add Project</button>
+                
+                <div id="achievements-container" class="mb-4"></div>
+                <button type="button" class="add-item-btn text-purple-400 font-semibold mb-4" data-type="achievements">+ Add Achievement</button>
+
+                <div id="certifications-container" class="mb-4"></div>
+                <button type="button" class="add-item-btn text-purple-400 font-semibold mb-4" data-type="certifications">+ Add Certification</button>
+
+                <div id="publications-container" class="mb-4"></div>
+                <button type="button" class="add-item-btn text-purple-400 font-semibold mb-4" data-type="publications">+ Add Publication</button>
+            </div>
+
+            <!-- Step 4: Socials & Uploads -->
+            <div class="step" data-step="4">
+                <h2 class="text-2xl font-semibold text-purple-400 mb-6">4. Socials & Uploads</h2>
+                 <!-- Dynamic Socials -->
+                 <div id="socials-container" class="mb-6"></div>
+                 <button type="button" class="add-item-btn text-purple-400 font-semibold mb-6" data-type="socials">+ Add Social Media Link</button>
+
+                 <!-- File Uploads -->
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                         <label class="block text-white mb-2" for="profile_pic">Profile Picture (will be cropped to a square)</label>
+                         <input type="file" id="profile_pic" accept="image/*" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500" required>
+                     </div>
+                     <div>
+                         <label class="block text-white mb-2" for="resume">Resume (PDF)</label>
+                         <input type="file" id="resume" accept=".pdf" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500">
+                     </div>
+                 </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="mt-8 flex justify-between">
+                <button type="button" id="prev-btn" class="bg-slate-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Previous</button>
+                <button type="button" id="next-btn" class="bg-purple-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-purple-500">Next</button>
+                <button type="submit" id="submit-btn" class="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-500 hidden">Generate & Download</button>
+            </div>
+        </form>
+
+        <!-- Creator Credit -->
+        <div class="text-center mt-8 text-sm text-slate-500">
+            <p>
+                Created by 
+                <a href="https://www.linkedin.com/in/nidhi-kulkarni2113/" target="_blank" class="font-semibold text-purple-400 hover:text-purple-300">
+                    NIDHI KULKARNI
+                </a>
+            </p>
+        </div>
+    </main>
+
+    <!-- Instructions UI (Hidden by default) -->
+    <div id="instructions-ui" class="hidden bg-slate-800 p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-4xl">
+        <h1 class="text-3xl font-bold text-green-400 text-center mb-4">✅ Success! Your Portfolio is Downloaded.</h1>
+        <p class="text-slate-400 text-center mb-8">Now, follow these steps to get your new website live on the internet.</p>
+
+        <div class="space-y-6 text-slate-300">
+            <!-- Step 1 -->
+            <div>
+                <h2 class="text-2xl font-semibold text-purple-400 mb-3">📦 1. Unzip the Folder</h2>
+                <p>First, extract the `.zip` file you just downloaded. Then, open a terminal or command prompt and navigate into the extracted folder:</p>
+                <pre class="mt-2"><code>cd path/to/your/unzipped-folder</code></pre>
+            </div>
+            <!-- Step 2 -->
+             <div>
+                <h2 class="text-2xl font-semibold text-purple-400 mb-3">🔧 2. Initialize Git</h2>
+                <p>Turn your folder into a Git repository:</p>
+                <pre class="mt-2"><code>git init</code></pre>
+            </div>
+            <!-- Step 3 -->
+             <div>
+                <h2 class="text-2xl font-semibold text-purple-400 mb-3">🌐 3. Connect to a New GitHub Repository</h2>
+                <p>Go to <a href="https://github.com/new" target="_blank" class="text-purple-400 underline hover:text-purple-300">github.com/new</a> to create a new, empty repository. Then, link your local folder to it:</p>
+                <pre class="mt-2"><code>git remote add origin https://github.com/your-username/your-repo-name.git</code></pre>
+                <p class="text-sm text-slate-500 mt-1">Replace the URL with your actual GitHub repository URL.</p>
+            </div>
+            <!-- Step 4 -->
+            <div>
+                <h2 class="text-2xl font-semibold text-purple-400 mb-3">✅ 4. Stage and Commit the Files</h2>
+                <p>Add and commit all your new website files:</p>
+                <pre class="mt-2"><code>git add .
+git commit -m "Initial commit"</code></pre>
+            </div>
+             <!-- Step 5 -->
+            <div>
+                <h2 class="text-2xl font-semibold text-purple-400 mb-3">🚀 5. Push to GitHub</h2>
+                <p>Send your files up to the main branch on GitHub:</p>
+                <pre class="mt-2"><code>git branch -M main
+git push -u origin main</code></pre>
+            </div>
+            <!-- Step 6 -->
+            <div>
+                <h2 class="text-2xl font-semibold text-purple-400 mb-3">🌐 6. Host with GitHub Pages</h2>
+                <p class="mb-2">To publish your `index.html` as a live website:</p>
+                <ol class="list-decimal list-inside space-y-1 pl-2">
+                    <li>Go to your new repository on GitHub.</li>
+                    <li>Click <strong>Settings</strong> → <strong>Pages</strong> (in the left sidebar).</li>
+                    <li>Under "Build and deployment", set the source to <strong>Deploy from a branch</strong>.</li>
+                    <li>Set the branch to <strong>main</strong> and folder to <strong>/ (root)</strong>, then click <strong>Save</strong>.</li>
+                </ol>
+                <p class="mt-3">After a minute, your site will be live at: <code class="bg-slate-700 p-1 rounded-md">https://your-username.github.io/your-repo-name/</code></p>
+            </div>
+        </div>
+        <div class="flex justify-center items-center gap-4 mt-8">
+            <button id="start-over-btn" class="bg-purple-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-purple-500">Generate Another Portfolio</button>
+            <button type="button" id="no-thanks-btn" class="bg-slate-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-slate-500">No, Thanks!</button>
+        </div>
+    </div>
+
+    <!-- About Me UI (Hidden by default) -->
+    <div id="about-me-ui" class="hidden bg-slate-800 p-8 rounded-2xl shadow-2xl w-full max-w-md text-center">
+        <h2 class="text-2xl font-bold text-white mb-4">About the Creator</h2>
+        <p class="text-slate-300 mb-6">
+
+Behold!✋🏼 This portfolio generator born out of pure necessity... and a little bit of spite. 😉<br>
+
+I'm Nidhi, a final-year Computer Science & Design student who recently went through the five stages of grief while building my own portfolio. After that ordeal, a friend (who I was having a *totally* mature and not-at-all-silly quarrel with) was impressed enough to demand I build one for her.
+
+So, fueled by caffeine and the desire to prove a point, I built this. It's a simple, minimalistic tool for anyone who'd rather be wrangling a Machine Learning model or a Python script than fighting a rogue. My primary user was my (then angry) friend, so if it's simple enough for her, it's simple enough for anyone. Hehe 😁. Enjoy! <br> Feel free to connect! 🫰🏼<br>
+Created with ❤️ by Nidhi Kulkarni
+        </p>
+        <a href="https://www.linkedin.com/in/nidhi-kulkarni2113/" target="_blank" class="inline-block bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-500 transition-all shadow-lg mb-8">
+            <i class="fab fa-linkedin mr-2"></i> Connect on LinkedIn
+        </a>
+        <div>
+            <button id="finish-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-500">Finish & Close Tab</button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex-col items-center justify-center hidden z-50">
+        <i class="fas fa-cog fa-spin fa-3x text-purple-400"></i>
+        <p class="text-white text-lg mt-4">Generating your portfolio...</p>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- UI Element References ---
+        const generatorUI = document.getElementById('generator-ui');
+        const instructionsUI = document.getElementById('instructions-ui');
+        const aboutMeUI = document.getElementById('about-me-ui');
+        const startOverBtn = document.getElementById('start-over-btn');
+        const noThanksBtn = document.getElementById('no-thanks-btn');
+        const finishBtn = document.getElementById('finish-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const form = document.getElementById('portfolio-form');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // --- State Management for the Form Wizard ---
+        let currentStep = 1;
+        const totalSteps = 4;
+
+        // Function to update the view based on the current step
+        const updateStepView = () => {
+            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+
+            prevBtn.disabled = currentStep === 1;
+            nextBtn.classList.toggle('hidden', currentStep === totalSteps);
+            submitBtn.classList.toggle('hidden', currentStep !== totalSteps);
+        };
+
+        // --- Navigation Logic ---
+        nextBtn.addEventListener('click', () => {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateStepView();
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepView();
+            }
+        });
+        
+        startOverBtn.addEventListener('click', () => {
+            // Simply reload the page to reset the form
+            window.location.reload();
+        });
+
+        noThanksBtn.addEventListener('click', () => {
+            instructionsUI.classList.add('hidden');
+            aboutMeUI.classList.remove('hidden');
+        });
+
+        finishBtn.addEventListener('click', () => {
+            // Note: window.close() may not work on pages not opened by a script.
+            finishBtn.textContent = 'Aloha !😇';
+            finishBtn.disabled = true;
+            window.close();
+        });
+
+        // --- Dynamic Form Field Generation ---
+        document.getElementById('add-education').addEventListener('click', () => {
+            const container = document.getElementById('education-container');
+            const entryCount = container.children.length + 1;
+            const newEntry = document.createElement('div');
+            newEntry.className = 'education-entry bg-slate-700/50 p-4 rounded-lg mt-4';
+            newEntry.innerHTML = `
+                <h3 class="font-semibold text-lg mb-2 text-white">Education #${entryCount}</h3>
+                <input type="text" placeholder="Degree" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2" required>
+                <input type="text" placeholder="Major" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2" required>
+                <input type="text" placeholder="University" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2" required>
+                <input type="text" placeholder="Year" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2" required>
+                <input type="text" placeholder="CGPA/Percentage" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2">
+                <textarea placeholder="Additional Info" rows="2" class="w-full bg-slate-700 text-white p-3 rounded-lg"></textarea>
+            `;
+            container.appendChild(newEntry);
+        });
+        
+        // Generic function to add more items (Projects, Achievements, etc.)
+        document.querySelectorAll('.add-item-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const type = e.target.dataset.type;
+                const container = document.getElementById(`${type}-container`);
+                const entryCount = container.children.length + 1;
+                const newEntry = document.createElement('div');
+                newEntry.className = 'dynamic-entry bg-slate-700/50 p-4 rounded-lg mt-2';
+
+                let fields = '';
+                switch(type) {
+                    case 'projects':
+                        fields = `
+                            <h3 class="font-semibold text-lg text-white">Project #${entryCount}</h3>
+                            <input type="text" placeholder="Project Name" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-2" required>
+                            <textarea placeholder="Description" rows="3" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-2" required></textarea>
+                            <input type="url" placeholder="Project Link" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-2">`;
+                        break;
+                    case 'achievements':
+                        fields = `<input type="text" placeholder="Achievement #${entryCount}" class="w-full bg-slate-700 text-white p-2 rounded-lg" required>`;
+                        break;
+                    case 'certifications':
+                        fields = `
+                            <h3 class="font-semibold text-lg text-white">Certification #${entryCount}</h3>
+                            <input type="text" placeholder="Certification Name" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-2" required>
+                            <input type="text" placeholder="Issuing Organization" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-2" required>
+                            <input type="url" placeholder="Credential Link" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-2">`;
+                        break;
+                    case 'publications':
+                         fields = `
+                            <h3 class="font-semibold text-lg text-white">Publication #${entryCount}</h3>
+                            <input type="text" placeholder="Publication Title" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-2" required>
+                            <input type="text" placeholder="Journal/Conference" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-2" required>
+                            <input type="url" placeholder="Link to Paper" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-2">`;
+                        break;
+                    case 'socials':
+                         fields = `
+                            <h3 class="font-semibold text-lg text-white">Social Link #${entryCount}</h3>
+                            <input type="text" placeholder="Website Name (e.g., GitHub, LinkedIn)" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-2" required>
+                            <input type="url" placeholder="Link to Profile" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-2" required>`;
+                        break;
+                }
+                newEntry.innerHTML = fields;
+                container.appendChild(newEntry);
+            });
+        });
+
+
+        // --- Form Submission and Portfolio Generation ---
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.classList.add('flex');
+
+            try {
+                // 1. Gather all data from the form
+                const data = {
+                    first_name: document.getElementById('first_name').value,
+                    last_name: document.getElementById('last_name').value,
+                    name: `${document.getElementById('first_name').value} ${document.getElementById('last_name').value}`,
+                    title: document.getElementById('title').value,
+                    about_me: document.getElementById('about_me').value,
+                    contact_email: document.getElementById('contact_email').value,
+                    skills: document.getElementById('skills').value.split(',').map(s => s.trim()),
+                    education: Array.from(document.querySelectorAll('.education-entry')).map(entry => ({
+                        degree: entry.children[1].value, major: entry.children[2].value, university: entry.children[3].value,
+                        year: entry.children[4].value, gpa: entry.children[5].value, info: entry.children[6].value
+                    })),
+                    projects: Array.from(document.querySelectorAll('#projects-container .dynamic-entry')).map(p => ({ name: p.children[1].value, description: p.children[2].value, link: p.children[3].value })),
+                    achievements: Array.from(document.querySelectorAll('#achievements-container .dynamic-entry input')).map(a => a.value),
+                    certifications: Array.from(document.querySelectorAll('#certifications-container .dynamic-entry')).map(c => ({ name: c.children[1].value, issuer: c.children[2].value, link: c.children[3].value })),
+                    publications: Array.from(document.querySelectorAll('#publications-container .dynamic-entry')).map(p => ({ title: p.children[1].value, journal: p.children[2].value, link: p.children[3].value })),
+                    socials: Array.from(document.querySelectorAll('#socials-container .dynamic-entry')).map(s => ({ name: s.children[1].value, link: s.children[2].value }))
+                };
+
+                // 2. Process uploaded files
+                const profilePicFile = document.getElementById('profile_pic').files[0];
+                const resumeFile = document.getElementById('resume').files[0];
+
+                let profilePicData, resumeData;
+                if(profilePicFile) {
+                    profilePicData = await processImage(profilePicFile);
+                }
+                if(resumeFile) {
+                    data.resume_filename = resumeFile.name;
+                    resumeData = await resumeFile.arrayBuffer();
+                }
+
+                // 3. Generate HTML content from template
+                const finalHtml = generateHtml(data);
+                
+                // 4. Create a zip file
+                const zip = new JSZip();
+                zip.file("index.html", finalHtml);
+                const staticFolder = zip.folder("static");
+                if (profilePicData) {
+                    staticFolder.file("profile.jpg", profilePicData, { binary: true });
+                }
+                if (resumeData) {
+                    staticFolder.file(resumeFile.name, resumeData, { binary: true });
+                }
+
+                // 5. Trigger download
+                const content = await zip.generateAsync({ type: "blob" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(content);
+                link.download = `${data.first_name.toLowerCase()}-${data.last_name.toLowerCase()}-portfolio.zip`;
+                link.click();
+                
+                // 6. Show the instructions screen
+                generatorUI.classList.add('hidden');
+                instructionsUI.classList.remove('hidden');
+
+
+            } catch (error) {
+                console.error("Error generating portfolio:", error);
+                alert("An error occurred. Please check the console for details.");
+            } finally {
+                // Hide loading overlay
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+            }
+        });
+
+        // Function to crop and resize image
+        const processImage = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        const newDim = Math.min(img.width, img.height);
+                        const left = (img.width - newDim) / 2;
+                        const top = (img.height - newDim) / 2;
+                        
+                        canvas.width = 400;
+                        canvas.height = 400;
+
+                        ctx.drawImage(img, left, top, newDim, newDim, 0, 0, 400, 400);
+
+                        canvas.toBlob(blob => {
+                            blob.arrayBuffer().then(resolve).catch(reject);
+                        }, 'image/jpeg', 0.9);
+                    };
+                    img.onerror = reject;
+                    img.src = event.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        };
+        
+        // This function acts as our templating engine.
+        const generateHtml = (data) => {
+            return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${data.name}'s Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; } </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+    <nav class="bg-slate-900/70 backdrop-blur-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <span class="text-2xl text-white font-bold">${data.first_name}</span>
+                <div class="hidden md:flex flex-wrap items-center space-x-4 text-slate-300">
+                    <a href="#about" class="hover:text-purple-400 transition-colors">About</a>
+                    <a href="#education" class="hover:text-purple-400 transition-colors">Education</a>
+                    <a href="#skills" class="hover:text-purple-400 transition-colors">Skills</a>
+                    <a href="#projects" class="hover:text-purple-400 transition-colors">Projects</a>
+                    <a href="#achievements" class="hover:text-purple-400 transition-colors">Achievements</a>
+                    <a href="#certifications" class="hover:text-purple-400 transition-colors">Certifications</a>
+                    <a href="#publications" class="hover:text-purple-400 transition-colors">Publications</a>
+                    <a href="#contact" class="hover:text-purple-400 transition-colors">Contact</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="max-w-5xl mx-auto p-4 space-y-24 mb-16">
+        <section id="hero" class="text-center pt-20 pb-10">
+            <img src="static/profile.jpg" alt="Profile Picture" class="w-40 h-40 rounded-full mx-auto mb-6 ring-4 ring-purple-500/50 shadow-lg">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-white mb-3">Hi, I'm ${data.name}</h1>
+            <p class="text-xl md:text-2xl text-purple-400 font-medium mb-8">${data.title}</p>
+            ${data.resume_filename ? `<a href="static/${data.resume_filename}" target="_blank" class="bg-purple-600 text-white font-bold py-3 px-8 rounded-full hover:bg-purple-500 transition-all shadow-lg hover:shadow-purple-500/40">View My Resume</a>` : ''}
+        </section>
+        <section id="about">
+            <h2 class="text-3xl font-bold text-white mb-6 text-center">About Me</h2>
+            <div class="bg-slate-800 p-8 rounded-lg shadow-xl"><p class="text-lg leading-relaxed">${data.about_me}</p></div>
+        </section>
+        <section id="education">
+            <h2 class="text-3xl font-bold text-white mb-8 text-center">Education</h2>
+            <div class="space-y-6">${data.education.map(edu => `
+                <div class="bg-slate-800 p-6 rounded-lg shadow-xl">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-bold text-white">${edu.degree} in ${edu.major}</h3>
+                            <p class="text-slate-400">${edu.university} ${edu.gpa ? `| ${edu.gpa}` : ''}</p>
+                            ${edu.info ? `<p class="text-sm text-slate-500 mt-2">${edu.info}</p>` : ''}
+                        </div>
+                        <span class="bg-purple-900 text-purple-300 text-sm font-medium px-3 py-1 rounded-full whitespace-nowrap">${edu.year}</span>
+                    </div>
+                </div>`).join('')}
+            </div>
+        </section>
+        <section id="skills">
+            <h2 class="text-3xl font-bold text-white mb-6 text-center">Core Skills</h2>
+            <div class="flex flex-wrap justify-center gap-4">${data.skills.map(skill => `<span class="bg-slate-700 text-purple-300 text-lg font-medium px-5 py-2 rounded-full">${skill}</span>`).join('')}</div>
+        </section>
+        <section id="projects">
+            <h2 class="text-3xl font-bold text-white mb-8 text-center">My Projects</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">${data.projects.map(p => `
+                <div class="bg-slate-800 rounded-lg shadow-xl overflow-hidden transform hover:-translate-y-2 transition-transform duration-300">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-white mb-2">${p.name}</h3>
+                        <p class="text-slate-400 mb-4">${p.description}</p>
+                        ${p.link ? `<a href="${p.link}" target="_blank" class="text-purple-400 hover:text-purple-300 font-semibold">View Project &rarr;</a>` : ''}
+                    </div>
+                </div>`).join('')}
+            </div>
+        </section>
+        <section id="achievements">
+            <h2 class="text-3xl font-bold text-white mb-8 text-center">Achievements</h2>
+            <div class="bg-slate-800 p-8 rounded-lg shadow-xl"><ul class="list-disc list-inside space-y-2">${data.achievements.map(a => `<li>${a}</li>`).join('')}</ul></div>
+        </section>
+        <section id="certifications">
+            <h2 class="text-3xl font-bold text-white mb-8 text-center">Certifications</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">${data.certifications.map(c => `
+                <div class="bg-slate-800 p-6 rounded-lg shadow-xl">
+                    <h3 class="text-xl font-bold text-white">${c.name}</h3>
+                    <p class="text-slate-400 mb-3">Issued by: ${c.issuer}</p>
+                    ${c.link ? `<a href="${c.link}" target="_blank" class="text-purple-400 hover:text-purple-300 font-semibold">View Credential &rarr;</a>` : ''}
+                </div>`).join('')}
+            </div>
+        </section>
+        <section id="publications">
+            <h2 class="text-3xl font-bold text-white mb-8 text-center">Publications</h2>
+             <div class="space-y-6">${data.publications.map(p => `
+                <div class="bg-slate-800 p-6 rounded-lg shadow-xl">
+                    <h3 class="text-xl font-bold text-white">"${p.title}"</h3>
+                    <p class="text-slate-400 italic mb-3">Published in: ${p.journal}</p>
+                    ${p.link ? `<a href="${p.link}" target="_blank" class="text-purple-400 hover:text-purple-300 font-semibold">Read Paper &rarr;</a>` : ''}
+                </div>`).join('')}
+            </div>
+        </section>
+        <section id="contact">
+            <h2 class="text-3xl font-bold text-white mb-6 text-center">Get In Touch</h2>
+            <div class="bg-slate-800 p-8 rounded-lg shadow-xl text-center">
+                <p class="text-lg mb-4">I'm always open to discussing new projects and opportunities.</p>
+                <a href="mailto:${data.contact_email}" class="inline-block bg-purple-600 text-white font-bold py-3 px-8 rounded-full hover:bg-purple-500 transition-all shadow-lg">Say Hello</a>
+                <div class="mt-8 flex justify-center space-x-6">${data.socials.map(s => {
+                    let iconClass = 'fas fa-link fa-2x';
+                    if (s.name.toLowerCase().includes('github')) iconClass = 'fab fa-github fa-2x';
+                    else if (s.name.toLowerCase().includes('linkedin')) iconClass = 'fab fa-linkedin fa-2x';
+                    else if (s.name.toLowerCase().includes('twitter')) iconClass = 'fab fa-twitter fa-2x';
+                    return `<a href="${s.link}" target="_blank" class="text-slate-400 hover:text-purple-400 transition-colors"><i class="${iconClass}"></i></a>`
+                }).join('')}</div>
+            </div>
+        </section>
+    </div>
+    <footer class="bg-slate-800/50 mt-16">
+        <div class="max-w-5xl mx-auto py-6 px-4 text-center text-slate-400">
+            <p>Creating right reserved by <a href="https://github.com/Nidhirk2113" target="_blank" class="text-purple-300 hover:text-white">NidhiKulkarni</a>.</p>
+        </div>
+    </footer>
+</body>
+</html>`;
+        };
+    });
+</script>
+
+</body>
+</html>
