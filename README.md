@@ -2,6 +2,13 @@
 
 Aloha Portfolio Generator is a sleek, minimal, and fully-responsive portfolio website generator — built with Tailwind CSS, JSZip, and pure JavaScript. This tool empowers students, developers, and professionals to create a stunning personal portfolio by simply filling out a multi-step form. Once completed, it instantly packages everything into a ready-to-host ZIP file.
 
+## ⚡ Try It Now
+
+👉 **Generate your portfolio in minutes**:  
+[Click here to use the Portfolio Generator](https://nidhirk2113.github.io/Aloha-Portfolio-generator/) 🚀
+
+---
+
 ### 🔗 Sample Portfolio Created Using This Project
 👉 [Aloha Sample Portfolio](https://nidhirk2113.github.io/Aloha-sample-portfolio/)
 
